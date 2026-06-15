@@ -340,17 +340,75 @@
     .card:hover .card-eyebrow { color: var(--muted); }
 
     .card-title {
-      font-family: var(--font-display);
-      font-size: 28px;
-      line-height: 1.1;
-      color: var(--text);
-      margin-bottom: 12px;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: var(--placeholder);
+      margin-bottom: 24px;
+      overflow: hidden;
       position: relative;
-      display: inline-block;
+      transition: transform 300ms var(--ease-out-quart);
+    }
+    .card:hover .card-image { transform: scale(1.02); }
+    .card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform-origin: center;
+      transition: transform 300ms var(--ease-out-quart);
+    }
+    .card:hover .card-image img { transform: scale(1.03); }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.8);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 240ms var(--ease-out-quart);
+      z-index: 9999;
+    }
+    .lightbox.open { opacity: 1; pointer-events: auto; }
+    .lightbox-inner { max-width: 90%; max-height: 90%; position: relative; }
+    .lightbox-inner img { width: 100%; height: auto; display: block; border-radius: 6px; }
+    .lightbox-close {
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--rule);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
     }
 
-    .card:hover .card-title { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
-
+    /* Responsive nav: collapse into menu on small screens */
+    @media (max-width: 880px) {
+      .nav-links { display: none; }
+      .nav-menu { display: flex; }
+      nav.menu-open .nav-links {
+        display: flex;
+        position: absolute;
+        top: 64px;
+        right: 20px;
+        background: rgba(15,15,13,0.95);
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      }
+    }
     .card-desc {
       font-family: var(--font-body);
       font-weight: 400;
@@ -561,6 +619,7 @@
         <!-- Card 1 -->
         <a href="/design-work/craft-design-systems" class="card reveal">
           <div class="card-image">
+            <img src="assets/images/sample1.svg" alt="Four-layer token architecture" loading="lazy">
             <div class="card-image-label">
               <span>[ DIAGRAM: Four-layer token architecture ]</span>
             </div>
@@ -573,6 +632,7 @@
         <!-- Card 2 -->
         <a href="/design-work/product-adoption" class="card reveal" style="transition-delay: 80ms;">
           <div class="card-image">
+            <img src="assets/images/sample2.svg" alt="White-label banking mobile UI" loading="lazy">
             <div class="card-image-label">
               <span>[ SCREENSHOT: White-label banking mobile UI ]</span>
             </div>
@@ -585,6 +645,7 @@
         <!-- Card 3 -->
         <a href="/design-work/design-intake" class="card reveal" style="transition-delay: 160ms;">
           <div class="card-image">
+            <img src="assets/images/sample3.svg" alt="Design Intake form" loading="lazy">
             <div class="card-image-label">
               <span>[ SCREENSHOT: Design Intake form ]</span>
             </div>
@@ -657,7 +718,6 @@
     window.addEventListener('scroll', () => {
       nav.classList.toggle('scrolled', window.scrollY > 80);
     }, { passive: true });
-
     // Scroll reveal
     const reveals = document.querySelectorAll('.reveal');
     const observer = new IntersectionObserver((entries) => {
@@ -670,7 +730,50 @@
     }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
     reveals.forEach(el => observer.observe(el));
+
+    // Mobile nav toggle
+    const menuBtn = document.querySelector('.nav-menu');
+    if (menuBtn) {
+      menuBtn.addEventListener('click', () => {
+        nav.classList.toggle('menu-open');
+        const expanded = String(nav.classList.contains('menu-open'));
+        menuBtn.setAttribute('aria-expanded', expanded);
+      });
+    }
+
+    // Lightbox for card images
+    const lightbox = document.createElement('div');
+    lightbox.id = 'lightbox';
+    lightbox.className = 'lightbox';
+    lightbox.setAttribute('aria-hidden', 'true');
+    lightbox.innerHTML = `<div class="lightbox-inner"><button id="lightbox-close" class="lightbox-close" aria-label="Close image">×</button><img id="lightbox-img" src="" alt=""></div>`;
+    document.body.appendChild(lightbox);
+
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxClose = document.getElementById('lightbox-close');
+
+    document.querySelectorAll('.card-image img').forEach(img => {
+      img.style.cursor = 'zoom-in';
+      img.addEventListener('click', (e) => {
+        lightboxImg.src = e.currentTarget.getAttribute('src');
+        lightbox.setAttribute('aria-hidden', 'false');
+        lightbox.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+
+    function closeLightbox() {
+      lightbox.classList.remove('open');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      lightboxImg.src = '';
+    }
+
+    lightboxClose.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
   </script>
+
 
 </body>
 </html>
